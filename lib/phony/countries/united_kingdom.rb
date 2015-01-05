@@ -16,10 +16,10 @@
 mobile_ndc = [
   # Mobile [4+6].
   #
-  ('7100'..'7599').to_a,
+  *('7100'..'7599'),
   '7624', # Isle of Man
-  ('7700'..'7999').to_a,
-].flatten
+  *('7700'..'7999')
+]
 
 two_digit_ndc = [
   # Geographic [2+8] - includes (02x) 0 and (02x) 1 as NDO.
@@ -195,7 +195,7 @@ variable_length_number = [
   '1946', # Whitehaven (Mixed area)
   '1949', # Whatton
   '1963', # Wincanton
-  '1995', # Garstang 
+  '1995', # Garstang
 ]
 
 four_digit_ndc = [
@@ -790,13 +790,15 @@ four_digit_ndc = [
 ]
 
 Phony.define do
-  country '44', one_of(mobile_ndc)             >> split(6)   | # 4-6
-                one_of(two_digit_ndc)          >> split(4,4) | # 2-4-4
-                match(/^([58]00)\d{6}$/)       >> split(6)   | # 3-6, Special handling for 500 and 800.
-                one_of(three_digit_ndc)        >> split(3,4) | # 3-3-4
-                match(/^(16977)\d{4}$/)        >> split(4)   | # 5-4, Special handling for 16977.
-                one_of(five_digit_ndc)         >> split(5)   | # 5-5
-                one_of(variable_length_number) >> split(6)   | # 4-6 and 4-5, in 40 areas.
-                one_of(four_digit_ndc)         >> split(6)   | # 4-6
-                fixed(4)                       >> split(6)     # Catchall for undefined numbers.
+  country '44',
+    trunk('0') |
+    one_of(mobile_ndc)             >> split(6)    | # 4-6
+    one_of(two_digit_ndc)          >> split(4,4)  | # 2-4-4
+    match(/^([58]00)\d{6}$/)       >> split(6)    | # 3-6, Special handling for 500 and 800.
+    one_of(three_digit_ndc)        >> split(3,4)  | # 3-3-4
+    match(/^(16977)\d{4}$/)        >> split(4)    | # 5-4, Special handling for 16977.
+    one_of(five_digit_ndc)         >> split(5)    | # 5-5
+    one_of(variable_length_number) >> split(5..6) | # 4-6 and 4-5, in 40 areas.
+    one_of(four_digit_ndc)         >> split(6)    | # 4-6
+    match(/^([135789]\d{3})/)      >> split(6)      # Catchall for plausible unallocated numbers.
 end

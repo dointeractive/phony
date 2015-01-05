@@ -25,9 +25,11 @@ require File.expand_path '../phony/countries/bangladesh', __FILE__
 require File.expand_path '../phony/countries/belarus', __FILE__
 require File.expand_path '../phony/countries/brazil', __FILE__
 require File.expand_path '../phony/countries/cambodia', __FILE__
+require File.expand_path '../phony/countries/croatia', __FILE__
 require File.expand_path '../phony/countries/china', __FILE__
 require File.expand_path '../phony/countries/georgia', __FILE__
 require File.expand_path '../phony/countries/germany', __FILE__
+require File.expand_path '../phony/countries/guinea', __FILE__
 require File.expand_path '../phony/countries/india', __FILE__
 require File.expand_path '../phony/countries/indonesia', __FILE__
 require File.expand_path '../phony/countries/ireland', __FILE__
@@ -52,6 +54,7 @@ require File.expand_path '../phony/countries/sweden', __FILE__
 require File.expand_path '../phony/countries/taiwan', __FILE__
 require File.expand_path '../phony/countries/tajikistan', __FILE__
 require File.expand_path '../phony/countries/turkmenistan', __FILE__
+require File.expand_path '../phony/countries/vietnam', __FILE__
 require File.expand_path '../phony/countries/ukraine', __FILE__
 require File.expand_path '../phony/countries/united_kingdom', __FILE__
 require File.expand_path '../phony/countries/uruguay', __FILE__
