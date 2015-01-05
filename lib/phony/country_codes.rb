@@ -10,23 +10,24 @@ module Phony
     attr_accessor :international_absolute_format, :international_relative_format, :national_format
 
     def initialize
-      @international_absolute_format = '+%s%s%s'
-      @international_relative_format = '00%s%s%s'
-      @national_format               = '%s%s'
+      @international_absolute_format = '+%s%s%s%s%s'
+      @international_relative_format = '00%s%s%s%s%s'
+      @national_format               = '%s%s%s%s'
 
       @default_space = ' '
+      @default_local_space = ' '
     end
 
     def self.instance
       @instance ||= new
     end
-    
+
     # Get the Country object for the given CC.
     #
     def [] cc
       countries[cc.size][cc]
     end
-    
+
     # Clean number of all non-numeric characters, initial zeros or (0).
     #
     @@basic_cleaning_pattern = /\A00?|\(0\)|\D/
@@ -40,7 +41,7 @@ module Phony
     def clean! number
       number.gsub!(@@basic_cleaning_pattern, EMPTY_STRING) || number
     end
-    
+
     # Adds the country code to the front
     # if it does not already start with it.
     #
@@ -84,46 +85,50 @@ module Phony
     end
 
     def format number, options = {}
-      format_cc_ndc_local options[:format], options[:spaces] || @default_space, *split(number)
+      format_cc_ndc_local options[:format],
+        options[:spaces] || @default_space,
+        options[:local_spaces] || options[:spaces] || @default_local_space,
+        *split(number)
     end
     alias formatted format
 
     # Formats country code and national destination code.
     #
-    def format_cc_ndc_local format, space, cc, zero, ndc, *parts
-      cc_ndc = format_cc_ndc format, space, cc, zero, ndc
-      local  = if parts.empty?
-                 cc_ndc = cc_ndc.slice 0...cc_ndc.rindex(space.to_s)
-                 EMPTY_STRING
-               else
-                 format_local(space, parts) unless parts.empty?
-               end
-      cc_ndc.empty?? local : "#{cc_ndc}#{space}#{local}"
+    def format_cc_ndc_local format, space, local_space, cc, trunk, ndc, *parts
+      local = if parts.empty?
+                EMPTY_STRING
+              else
+                format_local(local_space, parts) unless parts.empty?
+              end
+      format_cc_ndc format, space, cc, trunk, ndc, local
+      
+      # cc_ndc = cc_ndc.slice 0...cc_ndc.rindex(space.to_s) if parts.empty?
     end
-    #
-    # TODO This method needs an overhaul.
-    #
-    def format_cc_ndc format, space, cc, zero, ndc
+    def format_cc_ndc format, space, cc, trunk, ndc, local
       case format
+      when String
+        format % { :cc => cc, :ndc => ndc, :local => local }
       when nil, :international_absolute, :international, :+
         ndc ?
-          @international_absolute_format % [cc, space, ndc] :
-          @international_absolute_format % [cc, nil, nil]
+          @international_absolute_format % [cc, space, ndc, space, local] :
+          @international_absolute_format % [cc, space, local, nil, nil]
       when :international_relative
         ndc ?
-          @international_relative_format % [cc, space, ndc] :
-          @international_relative_format % [cc, nil, nil]
+          @international_relative_format % [cc, space, ndc, space, local] :
+          @international_relative_format % [cc, space, local, nil, nil]
       when :national
+        # Replaces the %s in the trunk code with a "space".
+        trunk = trunk % space if trunk && trunk.size > 1
         ndc && !ndc.empty? ?
-          @national_format % [zero, ndc] :
-          @national_format % [zero, nil]
+          @national_format % [trunk, ndc, space, local] :
+          @national_format % [trunk, nil, nil, nil]
       when :local
-        EMPTY_STRING
+        local
       end
     end
-    def format_local space, parts_ary
+    def format_local local_space, parts_ary
       parts_ary.compact!
-      parts_ary.join space.to_s
+      parts_ary.join local_space.to_s
     end
 
     #
@@ -153,7 +158,7 @@ module Phony
       country, cc, rest = split_cc vanity_number
       "#{cc}#{country.vanity_to_number(rest)}"
     end
-    
+
     def split_cc rest
       presumed_cc = ''
       1.upto(3) do |i|
@@ -163,21 +168,21 @@ module Phony
       end
       # This line is never reached as CCs are in prefix code.
     end
-    
+
     def plausible? number, hints = {}
       normalized = clean number
-      
+
       # False if it fails the basic check.
       #
       return false unless (4..15) === normalized.size
-      
+
       country, cc, rest = split_cc normalized
-      
+
       # Country code plausible?
       #
       cc_needed = hints[:cc]
       return false if cc_needed && !(cc_needed === cc)
-      
+
       # Country specific tests.
       #
       country.plausible? rest, hints
